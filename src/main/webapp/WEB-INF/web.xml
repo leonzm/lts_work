@@ -1,0 +1,48 @@
+<!DOCTYPE web-app PUBLIC
+ "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+ "http://java.sun.com/dtd/web-app_2_3.dtd" >
+
+<web-app>
+  <display-name>Archetype Created Web Application</display-name>
+  
+    <!-- 过滤器 -->
+	<filter>
+		<filter-name>Do_Filter</filter-name>
+		<filter-class>com.company.filter.Do_Filter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+		<init-param>
+			<param-name>allow</param-name>
+			<!-- <param-value>172.16.8.*</param-value> -->
+			<param-value>*</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+	    <filter-name>Do_Filter</filter-name>
+	    <url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<filter-mapping>
+		<filter-name>Do_Filter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<!-- restful -->
+	<servlet>
+		<servlet-name>restful_servlet</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:/conf/spring_mvc.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>restful_servlet</servlet-name>
+		<url-pattern>/rs/*</url-pattern>
+	</servlet-mapping>
+  
+</web-app>
+
