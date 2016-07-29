@@ -65,4 +65,9 @@ public class Launcher {
 		new Launcher().startJetty();
 	}
 	
+	// 启动 jobtracker 专用
+	public static void main2(String[] args) {
+		com.company.jobtracker.MyJobTracker.registerJobTracker();
+	}
+	
 }
