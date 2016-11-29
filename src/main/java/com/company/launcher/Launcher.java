@@ -41,12 +41,9 @@ public class Launcher {
 		server.setHandler(webContext);
 		return server;
 	}
-	
+
 	/**
 	 * 启动jetty服务
-	 * 
-	 * @param port
-	 * @param context
 	 */
 	public void startJetty() {
 		final Server server = Launcher.createServerInSource(PORT, CONTEXT, DEFAULT_WEBAPP_PATH, DESCRIPTOR);

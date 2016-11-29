@@ -14,12 +14,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @RequestMapping("/hello")
 public class HelloService {
 	
-	@RequestMapping(consumes = "multipart/form-data", value = "/hello/{name}", method = RequestMethod.GET)
+	@RequestMapping(value = "/hello/{name}", method = RequestMethod.GET)
 	public void hello(HttpServletRequest request, HttpServletResponse response, @PathVariable String name) throws IOException {
 		response.getWriter().write("Hello " + name);
 	}
 	
-	@RequestMapping(consumes = "multipart/form-data", value = "/hello", method = RequestMethod.POST)
+	@RequestMapping(value = "/hello", method = RequestMethod.POST)
 	public void hello2(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		String name = request.getParameter("name");
 		response.getWriter().write("Hello " + name);
