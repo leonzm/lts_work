@@ -49,6 +49,7 @@
       <commons.net.version>3.5</commons.net.version>
       <commons.email.version>1.4</commons.email.version>
       <okhttp.version>3.4.1</okhttp.version>
+      <commons.net.version>3.5</commons.net.version>
   </properties>
   
   <dependencies>
@@ -303,6 +304,13 @@
           <groupId>com.squareup.okhttp3</groupId>
           <artifactId>okhttp</artifactId>
           <version>${okhttp.version}</version>
+      </dependency>
+
+      <!-- commons-net -->
+      <dependency>
+          <groupId>commons-net</groupId>
+          <artifactId>commons-net</artifactId>
+          <version>${commons.net.version}</version>
       </dependency>
 	  
   </dependencies>
