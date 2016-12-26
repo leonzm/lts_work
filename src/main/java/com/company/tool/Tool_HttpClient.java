@@ -108,7 +108,8 @@ public class Tool_HttpClient {
 		Tool_HttpClient httpClient = new Tool_HttpClient();
 		
 		//System.out.println(httpClient.do_get("http://sowm.cn/importnew/article/C781FF9364AEA7EC9D599641D3C0E37F.html"));
-		System.out.println(httpClient.do_post("http://sowm.cn/importnew/article/C781FF9364AEA7EC9D599641D3C0E37F.html", null));
+		//System.out.println(httpClient.do_post("http://sowm.cn/importnew/article/C781FF9364AEA7EC9D599641D3C0E37F.html", null));
+		System.out.println(httpClient.do_get("http://192.168.1.72:11000"));
 	}
 
 }
