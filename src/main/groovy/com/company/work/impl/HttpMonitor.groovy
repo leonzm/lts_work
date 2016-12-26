@@ -29,7 +29,7 @@ import com.google.common.base.Strings;
 @SysDatasourceWork(datasource="httpMonitor")
 public class HttpMonitor extends LtsWork {
 	
-	private static final Logger LOG = Logger.getLogger(HiWork.class);
+	private static final Logger LOG = Logger.getLogger(HttpMonitor.class);
 
 	@Override
 	public Result run(JobContext jobContext) throws Throwable {
