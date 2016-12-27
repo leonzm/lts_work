@@ -5,6 +5,8 @@ import com.company.extend.Codis20MonitorExtend
 import com.company.extend.HttpMonitorExtend
 import com.company.model.CodisProxyInfo
 import com.company.model.CodisServer
+import com.company.service.SmsService
+import com.company.service.impl.SmsServiceImpl
 import com.company.tool.Tool_Email
 import com.company.work.LtsWork
 import com.github.ltsopensource.core.commons.utils.CollectionUtils
@@ -27,12 +29,14 @@ import java.text.SimpleDateFormat
  * environment 环境 <br/>
  * dashboard dashboard地址，格式：host:port <br/>
  * proxy 代理节点地址，格式：host:port，多个proxy的话，用逗号隔开 <br/>
- * auto 是否开启Redis的主备自动切换，true表示自动 <br/>
+ * auto 是否开启Redis的主备自动切换，"true"表示自动 <br/>
  */
 @SysDatasourceWork(datasource="codis2.0Monitor")
 public class Codis20Monitor extends LtsWork {
 
     private static final Logger LOG = Logger.getLogger(Codis20Monitor.class);
+
+    private SmsService smsService = new SmsServiceImpl();
 
     @Override
     public Result run(JobContext jobContext) throws Throwable {
@@ -68,6 +72,7 @@ public class Codis20Monitor extends LtsWork {
                         .concat("\r\nenvironment: ").concat(environment)
                         .concat("\r\ndashboard: ").concat(dashboard)
                         .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                smsService.sendOneSmsToOnePhone("Cods Dashboard timeout： + dashboard", "15001848348");
                 LOG.info("Cods Dashboard timeout：" + dashboard);
                 return new Result(Action.EXECUTE_FAILED, "Cods Dashboard timeout");
             }
@@ -81,25 +86,38 @@ public class Codis20Monitor extends LtsWork {
                                 .concat("\r\nenvironment: ").concat(environment)
                                 .concat("\r\nproxy: ").concat(prox)
                                 .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                        smsService.sendOneSmsToOnePhone("Cods Proxy timeout：" + prox, "15001848348");
                         LOG.info("Cods Proxy timeout：" + prox);
                     }
                 }
             }
 
             // 检查redis实例
+            Map<Integer, Map<CodisServer, Boolean>> redisInfo = new HashMap<>(); // <group_id, <codisServer, available>>，记录各group中redis的存活情况，便于主备切换
             List<CodisServer> codisServers = Codis20MonitorExtend.loadRedisServer(dashboard);
             for (CodisServer codisServer : codisServers) {
+                if (!redisInfo.containsKey(codisServer.getGroup_id())) {
+                    redisInfo.put(codisServer.getGroup_id(), new HashMap<>());
+                }
+
                 if (!Codis20MonitorExtend.availableRedisServer(dashboard, codisServer.getAddr())) {
+                    redisInfo.get(codisServer.getGroup_id()).put(codisServer, false);
                     Tool_Email.sendEmail("zhaoman@daihoubang.com", "Codis2.0 监控：Redis timeout", "name: ".concat(name)
                             .concat("\r\nenvironment: ").concat(environment)
                             .concat("\r\nredis: ").concat(codisServer.getAddr())
                             .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                    smsService.sendOneSmsToOnePhone("Cods Redis timeout：" + codisServer.getAddr(), "15001848348");
                     LOG.info("Cods Redis timeout：" + codisServer.getAddr());
+                } else {
+                    redisInfo.get(codisServer.getGroup_id()).put(codisServer, true);
                 }
             }
 
             // 主备切换
-            // TODO
+            if (auto.equals("true")){
+                Codis20MonitorExtend.autoPromote(name, environment, dashboard, redisInfo);
+            }
+
 
         } catch (Exception e) {
             LOG.warn("Run job failed!", e);
