@@ -1,0 +1,1 @@
+nohup java -Xms512m -Xmx1024m -Dfile.encoding=UTF-8 -jar -XX:+UseG1GC -XX:+UseStringDeduplication lts_work.jar > /dev/null 2>&1 &

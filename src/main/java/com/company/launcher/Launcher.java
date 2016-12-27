@@ -12,7 +12,7 @@ public class Launcher {
 
 	//private static final Logger LOG = Logger.getLogger(Launcher.class);
 	
-	public static final int PORT = 8080;
+	public static final int PORT = 7070;
 	public static final String CONTEXT = "/";
 	private static final String DEFAULT_WEBAPP_PATH = "src/main/webapp";
 	private static final String DESCRIPTOR = "src/main/webapp/WEB-INF/web.xml";
