@@ -29,6 +29,8 @@ public class TelnetMonitor extends LtsWork {
 
     private static final Logger LOG = Logger.getLogger(HiWork.class);
 
+    private static Map<String, Integer> instanceInfo = new HashMap<>(); // <address, 0>, 记录挂掉的实例
+
     @Override
     public Result run(JobContext jobContext) throws Throwable {
         try {
@@ -51,12 +53,26 @@ public class TelnetMonitor extends LtsWork {
             }
             String[] addresses = address.split(",");
             for (String addr : addresses) { // 逐个检查
-                if (!TelnetMonitorExtend.telnetCheck(addr)) {
-                    Tool_Email.sendEmail("zhaoman@daihoubang.com", "Telnet监控timeout", "name: ".concat(name)
-                            .concat("\r\nenvironment: ").concat(environment)
-                            .concat("\r\naddress: ").concat(addr)
-                            .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
-                    bizLogger.info(addr + "，telnet timeout, had send email.");
+                if (!TelnetMonitorExtend.telnetCheck(addr)) { // 有实例挂了
+                    if (!instanceInfo.containsKey(addr)) { // 第一次发现该实例挂了，发出报警；非第一次不发出报警
+                        instanceInfo.put(addr, 0);
+
+                        Tool_Email.sendEmail("zhaoman@daihoubang.com", "Telnet监控timeout", "name: ".concat(name)
+                                .concat("\r\nenvironment: ").concat(environment)
+                                .concat("\r\naddress: ").concat(addr)
+                                .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                        bizLogger.info(addr + "，telnet timeout, had send email.");
+                    }
+                } else { // 该实例正常
+                    if (instanceInfo.containsKey(addr)) { // 发现之前挂掉的实例恢复
+                        instanceInfo.remove(addr);
+
+                        Tool_Email.sendEmail("zhaoman@daihoubang.com", "Telnet监控 return to normal", "name: ".concat(name)
+                                .concat("\r\nenvironment: ").concat(environment)
+                                .concat("\r\naddress: ").concat(addr)
+                                .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                        bizLogger.info(addr + "，telnet return to normal, had send email.");
+                    }
                 }
             }
 

@@ -24,17 +24,19 @@ import java.text.SimpleDateFormat
 /**
  * Created by Leon on 2016/12/26.
  * Codis 2.0 监控 <br/>
- * 参数： <br/>
+ * 参数:  <br/>
  * name 监控命名 <br/>
  * environment 环境 <br/>
- * dashboard dashboard地址，格式：host:port <br/>
- * proxy 代理节点地址，格式：host:port，多个proxy的话，用逗号隔开 <br/>
+ * dashboard dashboard地址，格式: host:port <br/>
+ * proxy 代理节点地址，格式: host:port，多个proxy的话，用逗号隔开 <br/>
  * auto 是否开启Redis的主备自动切换，"true"表示自动 <br/>
  */
 @SysDatasourceWork(datasource="codis2.0Monitor")
 public class Codis20Monitor extends LtsWork {
 
     private static final Logger LOG = Logger.getLogger(Codis20Monitor.class);
+
+    private static Map<String, Integer> instanceInfo = new HashMap<>(); // <address, 0>, 记录挂掉的实例
 
     private SmsService smsService = new SmsServiceImpl();
 
@@ -68,13 +70,28 @@ public class Codis20Monitor extends LtsWork {
 
             // dashborad不能挂，否则无法继续
             if (!HttpMonitorExtend.httpCheck("http://" + dashboard + "/admin/")) {
-                Tool_Email.sendEmail("zhaoman@daihoubang.com", "Codis2.0 监控：Dashboard timeout", "name: ".concat(name)
-                        .concat("\r\nenvironment: ").concat(environment)
-                        .concat("\r\ndashboard: ").concat(dashboard)
-                        .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
-                smsService.sendOneSmsToOnePhone("Cods Dashboard timeout： + dashboard", "15001848348");
-                LOG.info("Cods Dashboard timeout：" + dashboard);
-                return new Result(Action.EXECUTE_FAILED, "Cods Dashboard timeout");
+                if (!instanceInfo.containsKey(dashboard)) { // 第一次发现该实例挂了，发出报警；非第一次不发出报警
+                    instanceInfo.put(dashboard, 0);
+
+                    Tool_Email.sendEmail("zhaoman@daihoubang.com", "Codis2.0 监控: Dashboard timeout", "name: ".concat(name)
+                            .concat("\r\nenvironment: ").concat(environment)
+                            .concat("\r\ndashboard: ").concat(dashboard)
+                            .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                    smsService.sendOneSmsToOnePhone("Cods Dashboard timeout: " + dashboard, "15001848348");
+                    LOG.info("Cods Dashboard timeout: " + dashboard);
+                }
+                return new Result(Action.EXECUTE_FAILED, "Cods Dashboard timeout: " + dashboard);
+            } else { // 该实例正常
+                if (instanceInfo.containsKey(dashboard)) { // 发现之前挂掉的实例恢复
+                    instanceInfo.remove(dashboard);
+
+                    Tool_Email.sendEmail("zhaoman@daihoubang.com", "Codis2.0 监控: Dashboard return to normal", "name: ".concat(name)
+                            .concat("\r\nenvironment: ").concat(environment)
+                            .concat("\r\ndashboard: ").concat(dashboard)
+                            .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                    smsService.sendOneSmsToOnePhone("Cods Dashboard return to normal: " + dashboard, "15001848348");
+                    LOG.info("Cods Dashboard return to normal: " + dashboard);
+                }
             }
 
             // 检查proxy，如果proxy不为空，则表示需要检查
@@ -82,12 +99,27 @@ public class Codis20Monitor extends LtsWork {
             if (!Strings.isNullOrEmpty(proxy)) { // host1:port1,host2:port2
                 for (String prox : proxy.split(",")) {
                     if (!proxyInfoMap.containsKey(prox)) {
-                        Tool_Email.sendEmail("zhaoman@daihoubang.com", "Codis2.0 监控：Proxy timeout", "name: ".concat(name)
-                                .concat("\r\nenvironment: ").concat(environment)
-                                .concat("\r\nproxy: ").concat(prox)
-                                .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
-                        smsService.sendOneSmsToOnePhone("Cods Proxy timeout：" + prox, "15001848348");
-                        LOG.info("Cods Proxy timeout：" + prox);
+                        if (!instanceInfo.containsKey(prox)) { // 第一次发现该实例挂了，发出报警；非第一次不发出报警
+                            instanceInfo.put(prox, 0);
+
+                            Tool_Email.sendEmail("zhaoman@daihoubang.com", "Codis2.0 监控: Proxy timeout", "name: ".concat(name)
+                                    .concat("\r\nenvironment: ").concat(environment)
+                                    .concat("\r\nproxy: ").concat(prox)
+                                    .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                            smsService.sendOneSmsToOnePhone("Cods Proxy timeout: " + prox, "15001848348");
+                            LOG.info("Cods Proxy timeout: " + prox);
+                        }
+                    } else { // 该实例正常
+                        if (instanceInfo.containsKey(prox)) { // 发现之前挂掉的实例恢复
+                            instanceInfo.remove(prox);
+
+                            Tool_Email.sendEmail("zhaoman@daihoubang.com", "Codis2.0 监控: Proxy return to normal", "name: ".concat(name)
+                                    .concat("\r\nenvironment: ").concat(environment)
+                                    .concat("\r\nproxy: ").concat(prox)
+                                    .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                            smsService.sendOneSmsToOnePhone("Cods Proxy return to normal: " + prox, "15001848348");
+                            LOG.info("Cods Proxy return to normal: " + prox);
+                        }
                     }
                 }
             }
@@ -101,14 +133,30 @@ public class Codis20Monitor extends LtsWork {
                 }
 
                 if (!Codis20MonitorExtend.availableRedisServer(dashboard, codisServer.getAddr())) {
-                    redisInfo.get(codisServer.getGroup_id()).put(codisServer, false);
-                    Tool_Email.sendEmail("zhaoman@daihoubang.com", "Codis2.0 监控：Redis timeout", "name: ".concat(name)
-                            .concat("\r\nenvironment: ").concat(environment)
-                            .concat("\r\nredis: ").concat(codisServer.getAddr())
-                            .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
-                    smsService.sendOneSmsToOnePhone("Cods Redis timeout：" + codisServer.getAddr(), "15001848348");
-                    LOG.info("Cods Redis timeout：" + codisServer.getAddr());
-                } else {
+                    if (!instanceInfo.containsKey(codisServer.getAddr())) { // 第一次发现该实例挂了，发出报警；非第一次不发出报警
+                        instanceInfo.put(codisServer.getAddr(), 0);
+
+                        redisInfo.get(codisServer.getGroup_id()).put(codisServer, false);
+                        Tool_Email.sendEmail("zhaoman@daihoubang.com", "Codis2.0 监控: Redis timeout", "name: ".concat(name)
+                                .concat("\r\nenvironment: ").concat(environment)
+                                .concat("\r\nredis: ").concat(codisServer.getAddr())
+                                .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                        smsService.sendOneSmsToOnePhone("Cods Redis timeout: " + codisServer.getAddr(), "15001848348");
+                        LOG.info("Cods Redis timeout: " + codisServer.getAddr());
+                    }
+                } else { // 该实例正常
+                    if (instanceInfo.containsKey(codisServer.getAddr())) { // 发现之前挂掉的实例恢复
+                        instanceInfo.remove(codisServer.getAddr());
+
+                        redisInfo.get(codisServer.getGroup_id()).put(codisServer, false);
+                        Tool_Email.sendEmail("zhaoman@daihoubang.com", "Codis2.0 监控: Redis return to normal", "name: ".concat(name)
+                                .concat("\r\nenvironment: ").concat(environment)
+                                .concat("\r\nredis: ").concat(codisServer.getAddr())
+                                .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                        smsService.sendOneSmsToOnePhone("Cods Redis return to normal: " + codisServer.getAddr(), "15001848348");
+                        LOG.info("Cods Redis return to normal: " + codisServer.getAddr());
+                    }
+
                     redisInfo.get(codisServer.getGroup_id()).put(codisServer, true);
                 }
             }
