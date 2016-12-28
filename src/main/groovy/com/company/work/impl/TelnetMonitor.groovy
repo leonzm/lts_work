@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat
 @SysDatasourceWork(datasource="telnetMonitor")
 public class TelnetMonitor extends LtsWork {
 
-    private static final Logger LOG = Logger.getLogger(HiWork.class);
+    private static final Logger LOG = Logger.getLogger(TelnetMonitor.class);
 
     private static Map<String, Integer> instanceInfo = new HashMap<>(); // <address, 0>, 记录挂掉的实例
 
