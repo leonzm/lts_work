@@ -3,6 +3,8 @@ package com.company.work.impl
 import com.company.annotation.SysDatasourceWork
 import com.company.extend.HttpMonitorExtend
 import com.company.extend.TelnetMonitorExtend
+import com.company.service.SmsService
+import com.company.service.impl.SmsServiceImpl
 import com.company.tool.Tool_Email
 import com.company.work.LtsWork
 import com.github.ltsopensource.core.commons.utils.CollectionUtils
@@ -31,6 +33,8 @@ public class TelnetMonitor extends LtsWork {
 
     private static Map<String, Integer> instanceInfo = new HashMap<>(); // <address, 0>, 记录挂掉的实例
 
+    private SmsService smsService = new SmsServiceImpl();
+
     @Override
     public Result run(JobContext jobContext) throws Throwable {
         try {
@@ -57,20 +61,24 @@ public class TelnetMonitor extends LtsWork {
                     if (!instanceInfo.containsKey(addr)) { // 第一次发现该实例挂了，发出报警；非第一次不发出报警
                         instanceInfo.put(addr, 0);
 
-                        Tool_Email.sendEmail("zhaoman@daihoubang.com", "Telnet监控timeout", "name: ".concat(name)
+                        String message = "name: ".concat(name)
                                 .concat("\r\nenvironment: ").concat(environment)
                                 .concat("\r\naddress: ").concat(addr)
-                                .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                                .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis()));
+                        Tool_Email.sendEmail("zhaoman@daihoubang.com", "Telnet监控timeout", message);
+                        smsService.sendOneSmsToOnePhone(message, "15001848348");
                         bizLogger.info(addr + "，telnet timeout, had send email.");
                     }
                 } else { // 该实例正常
                     if (instanceInfo.containsKey(addr)) { // 发现之前挂掉的实例恢复
                         instanceInfo.remove(addr);
 
-                        Tool_Email.sendEmail("zhaoman@daihoubang.com", "Telnet监控 return to normal", "name: ".concat(name)
+                        String message = "name: ".concat(name)
                                 .concat("\r\nenvironment: ").concat(environment)
                                 .concat("\r\naddress: ").concat(addr)
-                                .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis())));
+                                .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis()));
+                        Tool_Email.sendEmail("zhaoman@daihoubang.com", "Telnet监控 return to normal", message);
+                        smsService.sendOneSmsToOnePhone(message, "15001848348");
                         bizLogger.info(addr + "，telnet return to normal, had send email.");
                     }
                 }
