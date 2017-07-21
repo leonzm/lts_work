@@ -66,7 +66,7 @@ public class TelnetMonitor extends LtsWork {
                                 .concat("\r\naddress: ").concat(addr)
                                 .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis()));
                         Tool_Email.sendEmail("zhaoman@daihoubang.com", "Telnet监控timeout", message);
-                        smsService.sendOneSmsToOnePhone(message, "15001848348");
+                        smsService.sendOneSmsToOnePhone("Telnet monitor timeout ".concat(message), "15001848348");
                         bizLogger.info(addr + "，telnet timeout, had send email.");
                     }
                 } else { // 该实例正常
@@ -78,7 +78,7 @@ public class TelnetMonitor extends LtsWork {
                                 .concat("\r\naddress: ").concat(addr)
                                 .concat("\r\ntime: " + new Timestamp(System.currentTimeMillis()));
                         Tool_Email.sendEmail("zhaoman@daihoubang.com", "Telnet监控 return to normal", message);
-                        smsService.sendOneSmsToOnePhone(message, "15001848348");
+                        smsService.sendOneSmsToOnePhone("Telnet monitor return to normal ".concat(message), "15001848348");
                         bizLogger.info(addr + "，telnet return to normal, had send email.");
                     }
                 }
